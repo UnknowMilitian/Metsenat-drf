@@ -1,10 +1,11 @@
 import uuid
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authentication import (
     TokenAuthentication as RestTokenAuthentication,
 )
+from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView
 
 from .models import Company, User
@@ -79,3 +80,26 @@ class LoginConfirm(APIView):
         except Token.DoesNotExist:
             token = Token.objects.create(user=user, token=generate_token())
         return Response({"token": token.token, "user_id": user.pk})
+
+
+class UserListView(ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserDetailSerializer
+    permission_classes = [IsAdminUser]
+    authentication_classes = [RestTokenAuthentication]
+
+
+class UserDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserDetailSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [RestTokenAuthentication]
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return User.objects.all()
+        return User.objects.filter(id=self.request.user.id)
+
+    def perform_update(self, serializer):
+        if self.request.user.is_superuser or self.get_object() == self.request.user:
+            serializer.save()

@@ -10,12 +10,20 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             "id",
-            "type_user" "fullname",
+            "type_user",
+            "fullname",
             "telephone",
             "payment",
             "company",
             "condition",
         )
+        read_only_fields = ("id",)
+
+    def update(self, instance, validated_data):
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance
 
 
 class LoginConfirmSerializer(serializers.Serializer):
