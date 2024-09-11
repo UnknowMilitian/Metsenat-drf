@@ -16,6 +16,12 @@ class User(AbstractUser):
         sponsor = "Sponsor", "sponsor"
         student = "Student", "student"
 
+    class Condition(models.TextChoices):
+        new = "New", "new"
+        modernization = "Modernization", "modernization"
+        confirmed = "Confirmed", "confirmed"
+        canceled = "Canceled", "canceled"
+
     type_user = models.CharField(
         max_length=8, choices=Type_user, default=Type_user.student
     )
@@ -30,6 +36,9 @@ class User(AbstractUser):
         related_name="user_payment",
     )
     company = models.CharField(_("Company"), max_length=255, null=True, blank=True)
+    condition = models.CharField(
+        max_length=20, choices=Condition, default=Condition.new
+    )
 
     # Adding related_name to avoid clashes with the default auth models
     groups = models.ManyToManyField(
@@ -52,3 +61,16 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.fullname
+
+
+class Token(models.Model):
+    token = models.CharField(_("Token"), max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Token")
+        verbose_name_plural = _("Tokens")
+
+    def __str__(self):
+        return f"Token for user {self.user}"
